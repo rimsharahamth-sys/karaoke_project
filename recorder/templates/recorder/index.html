@@ -5,10 +5,8 @@
   <title>🎤 Karaoke Reels</title>
 
 <style>
-/* RESET */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* BODY → Fullscreen */
 body {
   background: #000;
   font-family: 'Poppins', sans-serif;
@@ -17,18 +15,6 @@ body {
   overflow: hidden;
 }
 
-/* ================================
-   🔥 FULL SCREEN RESPONSIVE LAYOUT
-   ================================ */
-.responsive-wrapper {
-  width: 100vw;
-  min-height: 100vh;
-  height: auto;
-  overflow: visible;
-  position: relative;
-}
-
-/* MAIN & FINAL SCREEN */
 .reel-container,
 .final-reel-container {
   width: 100%;
@@ -38,7 +24,6 @@ body {
   overflow: hidden;
 }
 
-/* STATUS TEXT – (HEADPHONE MESSAGE REMOVED) */
 #status {
   position: absolute;
   top: 20px;
@@ -50,7 +35,6 @@ body {
   text-shadow: 1px 1px 6px rgba(0,0,0,0.9);
 }
 
-/* BACKGROUND IMAGE */
 .reel-bg {
   position: absolute;
   top: 0; left: 0;
@@ -60,7 +44,6 @@ body {
   object-position: top;
 }
 
-/* LYRICS */
 .lyrics {
   position: absolute;
   bottom: 25%;
@@ -72,7 +55,6 @@ body {
   text-shadow: 2px 2px 10px black;
 }
 
-/* BUTTON AREA */
 .controls {
   position: absolute;
   bottom: 20%;
@@ -81,14 +63,13 @@ body {
   z-index: 30;
 }
 
-/* BUTTONS (SMALL SIZE) */
 button {
   background: linear-gradient(135deg, #ff0066, #ff66cc);
   border: none;
   color: white;
-  padding: 8px 20px;   /* 🔥 Smaller padding */
-  border-radius: 25px; /* Slightly smaller rounded */
-  font-size: 13px;     /* 🔥 Smaller text */
+  padding: 8px 20px;
+  border-radius: 25px;
+  font-size: 13px;
   margin: 4px;
   box-shadow: 0px 3px 15px rgba(255,0,128,0.4);
   cursor: pointer;
@@ -98,7 +79,6 @@ button:active {
   transform: scale(0.95);
 }
 
-/* FINAL OUTPUT FULLSCREEN */
 .final-output {
   position: fixed;
   width: 100vw;
@@ -115,24 +95,19 @@ button:active {
 
 <body>
 
-{% with s=songs.0 %}
-
 <!-- FULL SCREEN UI -->
 <div class="reel-container" id="reelContainer">
-    {% if s.lyrics_image %}
-      <img class="reel-bg" id="mainBg" src="{{ s.lyrics_image.url }}">
-    {% else %}
-      <img class="reel-bg" id="mainBg" src="/static/default_lyrics_bg.jpg">
-    {% endif %}
+    <img class="reel-bg" id="mainBg" src="https://karaoke-project-22.onrender.com/media/default_lyrics_bg.jpg">
 
-    <!-- 🔹 LOGO TOP LEFT -->
-    <img id="logoImg" src="/media/logo/branks3_logo.png" 
+    <!-- LOGO -->
+    <img id="logoImg" src="https://karaoke-project-22.onrender.com/media/logo/branks3_logo.png" 
          style="position:absolute; top:20px; left:20px; width:60px; z-index:50; opacity:0.6;">
 
     <div id="status"></div>
 
-    <audio id="originalAudio" src="{{ s.original_file.url }}"></audio>
-    <audio id="accompaniment" src="{{ s.accompaniment_file.url }}"></audio>
+    <!-- Audio Files -->
+    <audio id="originalAudio" src="https://karaoke-project-22.onrender.com/media/original_song1.mp3"></audio>
+    <audio id="accompaniment" src="https://karaoke-project-22.onrender.com/media/accompaniment1.mp3"></audio>
 
     <div class="controls">
       <button id="playBtn">▶️ Play</button>
@@ -141,20 +116,12 @@ button:active {
     </div>
 </div>
 
-</div>
-
-{% endwith %}
-
 <!-- FINAL OUTPUT -->
 <div class="final-output" id="finalOutputDiv">
   <div class="final-reel-container">
     <img class="reel-bg" id="finalBg">
-
-    <!-- 🔥 HEADPHONE TEXT REMOVED -->
     <div id="status"></div>
-
     <div class="lyrics" id="finalLyrics"></div>
-
     <div class="controls">
       <button id="playRecordingBtn">▶️ Play Recording</button>
       <a id="downloadRecordingBtn" href="#" download>
@@ -167,7 +134,7 @@ button:active {
 <script>
 let mediaRecorder;
 let recordedChunks = [];
-let currentSongId = "{{ songs.0.id }}";
+let currentSongId = 1; // Replace with your song ID if dynamic
 
 const playBtn = document.getElementById("playBtn");
 const recordBtn = document.getElementById("recordBtn");
@@ -179,7 +146,6 @@ const accompanimentAudio = document.getElementById("accompaniment");
 
 const finalDiv = document.getElementById("finalOutputDiv");
 const mainBg = document.getElementById("mainBg");
-const mainLyrics = document.getElementById("mainLyrics");
 const finalBg = document.getElementById("finalBg");
 const finalLyrics = document.getElementById("finalLyrics");
 
@@ -202,7 +168,6 @@ playBtn.onclick = async () => {
 
 recordBtn.onclick = async () => {
     recordedChunks = [];
-
     let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     mediaRecorder = new MediaRecorder(stream);
 
@@ -217,7 +182,7 @@ recordBtn.onclick = async () => {
 
         status.innerText = "⏳ Processing…";
 
-        const resp = await fetch(`/upload_recording/${currentSongId}/`, {
+        const resp = await fetch(`https://karaoke-project-22.onrender.com/upload_recording/${currentSongId}/`, {
             method: "POST",
             body: form
         });
@@ -225,8 +190,7 @@ recordBtn.onclick = async () => {
         const data = await resp.json();
 
         finalBg.src = mainBg.src;
-        finalLyrics.innerText = mainLyrics?.innerText || "";
-
+        finalLyrics.innerText = ""; // Optional: add lyrics if available
         finalDiv.style.display = "flex";
 
         downloadRecordingBtn.href = data.final_url;
@@ -251,8 +215,6 @@ recordBtn.onclick = async () => {
         };
     };
 
-    await new Promise(res => setTimeout(res, 150));
-
     mediaRecorder.start();
 
     originalAudio.currentTime = 0;
@@ -270,12 +232,9 @@ recordBtn.onclick = async () => {
 
 stopBtn.onclick = () => {
     try { mediaRecorder.stop(); } catch(e){}
-
     originalAudio.pause();
     accompanimentAudio.pause();
-
     status.innerText = "⏹️ Recording stopped. Processing…";
-
     stopBtn.style.display = "none";
 };
 </script>
