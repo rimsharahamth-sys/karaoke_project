@@ -2,8 +2,9 @@
 Django==4.2.7
 
 # Audio processing - Updated for Python 3.10+ compatibility
-pydub==0.25.1
 spleeter==2.4.2
+pydub==0.25.1
+
 ffmpeg-python==0.2.0
 librosa==0.10.1
 numpy>=1.25.0,<2.0.0
