@@ -10,3 +10,5 @@ boto3
 django-storages[boto3]
 Pillow
 python-dotenv
+cloudinary
+django-cloudinary-storage
