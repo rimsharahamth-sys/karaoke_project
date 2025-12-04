@@ -7,7 +7,8 @@ from pathlib import Path
 import os
 import dj_database_url
 
-BASE_DIR = Path(_file_).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 # SECURITY — Keep secret key hidden in production!
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-insecure-secret-key")
