@@ -1,13 +1,22 @@
+# Django framework
 Django==4.2.7
+
+# Audio processing
 pydub==0.25.1
 spleeter==2.3.2
 ffmpeg-python==0.2.0
-numpy>=1.25.0  # CHANGED: Avoids distutils issue in older versions
 librosa==0.8.1
-tensorflow==2.12.0
+numpy>=1.25.0
 six==1.16.0
+
+# Machine learning / TensorFlow
+tensorflow==2.12.0
+
+# Utilities
 requests==2.31.0
 pytz==2024.1
 sqlparse==0.4.4
 asgiref==3.7.2
+
+# Production server
 gunicorn==21.2.0
