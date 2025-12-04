@@ -1,22 +1,31 @@
-FROM python:3.12-slim
+# Use Python version compatible with Spleeter
+FROM python:3.9-slim
 
-# Install system dependencies (FFmpeg + others)
-RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    git \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-# Create working directory
+# Create project directory
 WORKDIR /app
 
-# Copy requirements
-COPY requirements.txt .
+# Copy requirements first (for caching)
+COPY requirements.txt /app/
 
-# Install python libs
+# Install dependencies
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project files
-COPY . .
+# Copy entire project
+COPY . /app/
 
-# Django collectstatic (optional)
+# Collect static files (optional for Render deploys)
 RUN python manage.py collectstatic --noinput || true
 
-# Run server
+# Expose Django port
+EXPOSE 8000
+
+# Run Gunicorn server
 CMD ["gunicorn", "karaoke_project.wsgi:application", "--bind", "0.0.0.0:8000"]
