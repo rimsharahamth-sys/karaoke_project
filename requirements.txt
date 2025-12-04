@@ -1,9 +1,12 @@
+
 Django
 gunicorn
+whitenoise
 dj-database-url
 psycopg2-binary
-whitenoise
 pydub
-# plus any other dependencies you already use
-
 audioop-lts
+boto3
+django-storages[boto3]
+Pillow
+python-dotenv
