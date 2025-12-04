@@ -18,4 +18,5 @@ ENV PORT=8000
 
 EXPOSE 8000
 
-CMD ["gunicorn", "karaoke_project.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD exec gunicorn karaoke_project.wsgi:application --bind 0.0.0.0:$PORT
+
