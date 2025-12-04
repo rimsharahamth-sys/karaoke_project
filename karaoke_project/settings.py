@@ -1,6 +1,8 @@
 from pathlib import Path
 import os
 import dj_database_url
+import cloudinary
+import cloudinary_storage
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -15,8 +17,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Your app
     'recorder',
-    'storages',  # ✅ Add this
+
+    # Cloudinary
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
 MIDDLEWARE = [
@@ -50,6 +57,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'karaoke_project.wsgi.application'
 
+# ---------------- DATABASE ----------------
 DATABASES = {
     'default': dj_database_url.config(
         default=f"sqlite:///{BASE_DIR/'db.sqlite3'}",
@@ -58,6 +66,7 @@ DATABASES = {
     )
 }
 
+# ---------------- PASSWORD VALIDATION ----------------
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -75,26 +84,24 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
-# Rendermeda
+# Whitenoise config
 WHITENOISE_AUTOREFRESH = True
-
-MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# ---------------- CLOUDINARY MEDIA STORAGE ----------------
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+CLOUDINARY_URL = os.getenv("CLOUDINARY_URL")  # Render లో env var add చేసాం కదా!
+
+# Cloudinary auto-configure
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True
+)
+
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
 
-# ---------------- MEDIA FILES ON AWS S3 ----------------
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
-AWS_QUERYSTRING_AUTH = False  # Public URLs without signature
-
-# Optional: folder in bucket
-AWS_LOCATION = 'media'
-MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{AWS_LOCATION}/'
-
+# ---------------- DEFAULT ----------------
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
