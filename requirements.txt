@@ -1,23 +1,7 @@
-# Django framework
-Django==4.2.7
-
-# Audio processing - Updated for Python 3.10+ compatibility
-
-pydub==0.25.1
-
-ffmpeg-python==0.2.0
-librosa==0.10.1
-numpy>=1.25.0,<2.0.0
-six==1.16.0
-
-# Machine learning / TensorFlow - Compatible with spleeter 2.4.2
-tensorflow==2.13.0
-
-# Utilities
-requests==2.31.0
-pytz==2024.1
-sqlparse==0.4.4
-asgiref==3.7.2
-
-# Production server
-gunicorn==21.2.0
+Django==5.2.5
+gunicorn
+whitenoise
+pydub
+dj-database-url
+python-dotenv
+PyNaCl
