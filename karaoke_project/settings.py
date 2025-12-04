@@ -7,11 +7,13 @@ from pathlib import Path
 import os
 import dj_database_url
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(_file_).resolve().parent.parent
 
-# ------------------- Security -------------------
+# SECURITY — Keep secret key hidden in production!
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-insecure-secret-key")
+
 DEBUG = os.getenv("DEBUG", "True") == "True"
+
 ALLOWED_HOSTS = ["*",]  # Render uses dynamic host
 
 
@@ -23,19 +25,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'recorder',          # Your app
-    'corsheaders',       # CORS support
+    'recorder',
 ]
 
 
 # ------------------- Middleware -------------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    
+
     # Whitenoise for static files on Render
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    
-    'corsheaders.middleware.CorsMiddleware',   # Must be above CommonMiddleware
+
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -48,11 +48,11 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'karaoke_project.urls'
 
 
-# ------------------- Templates -------------------
+# ------------------- TEMPLATES -------------------
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # Global templates folder
+        'DIRS': [BASE_DIR / 'templates'],  # Global Templates Folder
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -69,7 +69,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'karaoke_project.wsgi.application'
 
 
-# ------------------- Database -------------------
+# ------------------- Database (Auto SQLite / PostgreSQL) -------------------
 DATABASES = {
     'default': dj_database_url.config(
         default=f"sqlite:///{BASE_DIR/'db.sqlite3'}",
@@ -79,7 +79,7 @@ DATABASES = {
 }
 
 
-# ------------------- Password Validators -------------------
+# ------------------- Password Validation -------------------
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -95,22 +95,16 @@ USE_I18N = True
 USE_TZ = True
 
 
-# ------------------- Static Files -------------------
+# ------------------- Static & Media Files -------------------
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-
-# ------------------- Media Files -------------------
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 
-# ------------------- CORS Settings -------------------
-CORS_ALLOW_ALL_ORIGINS = True   # Allow all origins for GitHub Pages frontend
-CORS_ALLOW_CREDENTIALS = True
-
-
-# ------------------- Default Primary Key -------------------
+# ------------------- Automatic primary key type -------------------
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
