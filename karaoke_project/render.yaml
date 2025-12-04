@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: karaoke
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn karaoke_project.wsgi"
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - key: DJANGO_SETTINGS_MODULE
+        value: karaoke_project.settings
