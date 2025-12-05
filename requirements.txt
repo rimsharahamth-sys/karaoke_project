@@ -12,3 +12,4 @@ Pillow
 python-dotenv
 cloudinary
 django-cloudinary-storage
+spleeter
