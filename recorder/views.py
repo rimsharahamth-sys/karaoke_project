@@ -1,14 +1,15 @@
 import os
 import uuid
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.conf import settings
 from django.http import JsonResponse, HttpResponse
 from .models import UploadedSong
 from django.views.decorators.csrf import csrf_exempt
-
 from pydub import AudioSegment
+import cloudinary.uploader
+import subprocess
 
-# Optional: Spleeter separation function (requires spleeter installed)
+# Optional: Spleeter separation function
 def separate_with_spleeter(input_path, output_dir):
     try:
         from spleeter.separator import Separator
@@ -27,34 +28,26 @@ def index(request):
     return render(request, 'recorder/index.html', {'songs': songs})
 
 def prepare_accompaniment(song: UploadedSong):
-    """Ensure accompaniment_file exists. If is_instrumental True, use original. 
-       Else, attempt to separate using spleeter (if installed)."""
     if song.accompaniment_file:
         return song.accompaniment_file.path
     if song.is_instrumental:
-        # copy original to accompaniment field
         song.accompaniment_file.name = song.original_file.name
         song.save()
         return song.accompaniment_file.path
-    # try server-side separation
     in_path = song.original_file.path
     out_dir = os.path.join(settings.MEDIA_ROOT, 'songs', 'separated')
     os.makedirs(out_dir, exist_ok=True)
     try:
         accomp_wav = separate_with_spleeter(in_path, out_dir)
-        # convert to mp3
         audio = AudioSegment.from_file(accomp_wav)
-        target_path = os.path.join(settings.MEDIA_ROOT, 'songs', 'accomp_' + str(uuid.uuid4()) + '.mp3')
-        os.makedirs(os.path.dirname(target_path), exist_ok=True)
-        audio.export(target_path, format='mp3')
-        song.accompaniment_file.name = os.path.relpath(target_path, settings.MEDIA_ROOT).replace('\\','/')
+        temp_path = os.path.join(out_dir, f'accomp_{uuid.uuid4().hex}.mp3')
+        audio.export(temp_path, format='mp3')
+        song.accompaniment_file.name = os.path.relpath(temp_path, settings.MEDIA_ROOT).replace('\\','/')
         song.save()
-        return song.accompaniment_file.path
+        return temp_path
     except Exception as e:
         raise
 
-@csrf_exempt
-@csrf_exempt
 @csrf_exempt
 def upload_recording(request, song_id):
     if request.method != 'POST':
@@ -74,7 +67,6 @@ def upload_recording(request, song_id):
     # ---------- SAVE TEMP RECORDING ----------
     temp_rec_path = os.path.join(settings.MEDIA_ROOT, 'temp', f'rec_{uuid.uuid4().hex}.webm')
     os.makedirs(os.path.dirname(temp_rec_path), exist_ok=True)
-
     with open(temp_rec_path, 'wb') as f:
         for chunk in rec.chunks():
             f.write(chunk)
@@ -87,7 +79,7 @@ def upload_recording(request, song_id):
 
     accomp_audio = AudioSegment.from_file(accomp_path)
 
-    # Match SR + channels
+    # Match sample rate + channels
     rec_audio = rec_audio.set_frame_rate(accomp_audio.frame_rate).set_channels(accomp_audio.channels)
 
     # Trim to equal duration
@@ -105,48 +97,34 @@ def upload_recording(request, song_id):
     mixed.export(final_audio_path, format="mp3")
 
     # ---------- CREATE VIDEO (MP4) WITH IMAGE ----------
-    # background image = lyrics_image OR default
     if song.lyrics_image:
         bg_img_path = song.lyrics_image.path
     else:
         bg_img_path = os.path.join(settings.BASE_DIR, 'static/default_lyrics_bg.jpg')
 
     final_video_path = os.path.join(settings.MEDIA_ROOT, 'finals', f'final_{uuid.uuid4().hex}.mp4')
-
-    # FFmpeg generate MP4 with static image + audio
-    # 30 seconds → dynamic based on audio length
-    # FFmpeg generate MP4 with static image + audio
-    # 30 seconds → dynamic based on audio length
-    import subprocess
-
     logo_path = os.path.join(settings.MEDIA_ROOT, "logo/branks3_logo.png")
 
     cmd = [
-    "ffmpeg",
-    "-loop", "1",
-    "-i", bg_img_path,        # background image
-    "-i", logo_path,          # logo image
-    "-i", final_audio_path,   # final mixed audio
-    "-filter_complex",
-    "[1]scale=80:-1[logo];"          # scale logo width=100px, height auto
-    "[logo]format=rgba,colorchannelmixer=aa=0.6[logo_alpha];"
-    "[0][logo_alpha]overlay=20:20",   # top-right corner, 20px margin
-    "-c:v", "libx264",
-    "-tune", "stillimage",
-    "-c:a", "aac",
-    "-b:a", "192k",
-    "-pix_fmt", "yuv420p",
-    "-shortest",
-    final_video_path
-]
-
-
+        "ffmpeg",
+        "-loop", "1",
+        "-i", bg_img_path,
+        "-i", logo_path,
+        "-i", final_audio_path,
+        "-filter_complex",
+        "[1]scale=80:-1[logo];[logo]format=rgba,colorchannelmixer=aa=0.6[logo_alpha];[0][logo_alpha]overlay=20:20",
+        "-c:v", "libx264",
+        "-tune", "stillimage",
+        "-c:a", "aac",
+        "-b:a", "192k",
+        "-pix_fmt", "yuv420p",
+        "-shortest",
+        final_video_path
+    ]
     subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
+    # ---------- UPLOAD FINAL VIDEO TO CLOUDINARY ----------
+    upload_result = cloudinary.uploader.upload(final_video_path, resource_type="video")
+    final_url = upload_result['secure_url']
 
-    # ---------- RETURN URL TO FRONTEND ----------
-    final_video_url = settings.MEDIA_URL + os.path.relpath(final_video_path, settings.MEDIA_ROOT).replace("\\", "/")
-
-    return JsonResponse({
-        'final_url': final_video_url   # send video instead of mp3
-    })
+    return JsonResponse({'final_url': final_url})
